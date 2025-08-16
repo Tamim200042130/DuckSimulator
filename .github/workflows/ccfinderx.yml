@@ -1,27 +1,69 @@
-name: CCFinderX
+name: CCFinderX Clone Detection
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:   # allows manual run from Actions tab
+  workflow_dispatch:   # manual run
 
 jobs:
   run-ccfinderx:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+
     steps:
+      # 1️⃣ Checkout your DuckSimulator repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Run CCFinderX using GitHub Action
-        uses: gpoo/ccfinderx-action@v1
-        with:
-          path: ./   # scan the whole DuckSimulator project
-          output: result.txt
+      # 2️⃣ Install dependencies for building CCFinderX
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            autoconf \
+            automake \
+            libtool \
+            libboost-all-dev \
+            libicu-dev \
+            python2.7-dev \
+            mono-complete \
+            wget \
+            unzip
 
+      # 3️⃣ Clone and build CCFinderX from source
+      - name: Clone CCFinderX repository
+        run: |
+          git clone https://github.com/gpoo/ccfinderx.git
+          cd ccfinderx
+          libtoolize
+          aclocal -I m4 --install
+          autoconf
+          automake --foreign --add-missing
+          ./configure
+          make
+
+      # 4️⃣ Optional: Build GemX GUI (skip if not needed)
+      - name: Build GemX GUI (optional)
+        run: |
+          cd ccfinderx/GemX
+          make || echo "Skipping GemX build if fails"
+
+      # 5️⃣ Run CCFinderX on DuckSimulator
+      - name: Run CCFinderX
+        run: |
+          cd ccfinderx
+          ./ccfx/ccfx d java ../DuckSimulator -o result.ccfxd
+          ./ccfx/ccfx p result.ccfxd -o result.txt
+          cat result.txt
+
+      # 6️⃣ Upload the result.txt as artifact
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
           name: ccfinderx-report
           path: result.txt
+
+      # 7️⃣ Clean up (optional)
+      
