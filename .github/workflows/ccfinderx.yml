@@ -5,16 +5,18 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:   # allows manual run from Actions tab
+  workflow_dispatch:   # manual run
 
 jobs:
   run-ccfinderx:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
+      # 1️⃣ Checkout your DuckSimulator repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2️⃣ Install dependencies for building CCFinderX
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -25,13 +27,12 @@ jobs:
             libtool \
             libboost-all-dev \
             libicu-dev \
-            python2 \
+            python2.7-dev \
             mono-complete \
             wget \
             unzip
-          sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
-          python --version
 
+      # 3️⃣ Clone and build CCFinderX from source
       - name: Clone CCFinderX repository
         run: |
           git clone https://github.com/gpoo/ccfinderx.git
@@ -43,21 +44,23 @@ jobs:
           ./configure
           make
 
-      - name: (Optional) Build GemX GUI
+      # 4️⃣ Optional: Build GemX GUI (skip if not needed)
+      - name: Build GemX GUI (optional)
         run: |
           cd ccfinderx/GemX
           make || echo "Skipping GemX build if fails"
 
-      - name: Run CCFinderX on DuckSimulator
+      # 5️⃣ Run CCFinderX on DuckSimulator
+      - name: Run CCFinderX
         run: |
           cd ccfinderx
           ./ccfx/ccfx d java ../DuckSimulator -o result.ccfxd
           ./ccfx/ccfx p result.ccfxd -o result.txt
           cat result.txt
 
+      # 6️⃣ Upload the result.txt as artifact
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
           name: ccfinderx-report
           path: result.txt
-          
