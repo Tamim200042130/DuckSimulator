@@ -14,19 +14,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y build-essential cmake
+      - name: Run CCFinderX using GitHub Action
+        uses: gpoo/ccfinderx-action@v1
+        with:
+          path: ./   # scan the whole DuckSimulator project
+          output: result.txt
 
-      - name: Build CCFinderX
-        run: |
-          git clone https://github.com/gpoo/ccfinderx.git
-          cd ccfinderx
-          mkdir build && cd build
-          cmake ..
-          make
-          sudo make install
-
-      - name: Run CCFinderX
-        run: |
-          ccfinderx -i ../DuckSimulator -o result.txt
-          cat result.txt
+      - name: Upload results
+        uses: actions/upload-artifact@v3
+        with:
+          name: ccfinderx-report
+          path: result.txt
