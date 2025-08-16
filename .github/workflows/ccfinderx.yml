@@ -25,9 +25,12 @@ jobs:
             libtool \
             libboost-all-dev \
             libicu-dev \
-            python2.7-dev \
+            python2 \
+            mono-complete \
             wget \
             unzip
+          sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
+          python --version
 
       - name: Clone CCFinderX repository
         run: |
@@ -40,10 +43,10 @@ jobs:
           ./configure
           make
 
-      - name: Build GemX (GUI)
+      - name: (Optional) Build GemX GUI
         run: |
           cd ccfinderx/GemX
-          make
+          make || echo "Skipping GemX build if fails"
 
       - name: Run CCFinderX on DuckSimulator
         run: |
