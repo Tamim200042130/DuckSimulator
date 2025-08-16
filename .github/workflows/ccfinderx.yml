@@ -1,9 +1,11 @@
-name: CCFinderX
+name: CCFinderX Clone Detection
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:   # manual run
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:   # allows manual run from Actions tab
 
 jobs:
   run-ccfinderx:
@@ -16,17 +18,37 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y mono-complete unzip wget
+          sudo apt-get install -y \
+            build-essential \
+            autoconf \
+            automake \
+            libtool \
+            libboost-all-dev \
+            libicu-dev \
+            python2.7-dev \
+            wget \
+            unzip
 
-      - name: Download CCFinderX prebuilt binary
+      - name: Clone CCFinderX repository
         run: |
-          wget https://github.com/gpoo/ccfinderx/releases/download/v1.0/ccfx.zip
-          unzip ccfx.zip -d ccfx
-          chmod +x ccfx/ccfx
+          git clone https://github.com/gpoo/ccfinderx.git
+          cd ccfinderx
+          libtoolize
+          aclocal -I m4 --install
+          autoconf
+          automake --foreign --add-missing
+          ./configure
+          make
 
-      - name: Run CCFinderX (Java)
+      - name: Build GemX (GUI)
         run: |
-          ./ccfx/ccfx d java ./ -o result.ccfxd
+          cd ccfinderx/GemX
+          make
+
+      - name: Run CCFinderX on DuckSimulator
+        run: |
+          cd ccfinderx
+          ./ccfx/ccfx d java ../DuckSimulator -o result.ccfxd
           ./ccfx/ccfx p result.ccfxd -o result.txt
           cat result.txt
 
