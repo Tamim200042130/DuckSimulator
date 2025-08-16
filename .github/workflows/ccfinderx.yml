@@ -1,52 +1,32 @@
-name: CCFinderX Clone Detection
+name: CCFinderX
 
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - "**/*.java"
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:   # allows manual run from Actions tab
 
 jobs:
-  ccfx:
-    runs-on: ubuntu-20.04   
+  run-ccfinderx:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout your project
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Install build deps
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake
+
+      - name: Build CCFinderX
         run: |
-          sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential \
-              libboost-dev libboost-thread-dev libboost-system-dev \
-              libicu-dev python2 python2-dev perl
+          git clone https://github.com/gpoo/ccfinderx.git
+          cd ccfinderx
+          mkdir build && cd build
+          cmake ..
+          make
+          sudo make install
 
-      - name: Build CCFinderX (core)
+      - name: Run CCFinderX
         run: |
-          git clone https://github.com/petersenna/ccfinderx-core.git
-          cd ccfinderx-core
-          ./autoconf_init.sh
-          ./configure
-          make -j2
-
-      - name: Run clone detection (Java)
-        run: |
-          cd ccfinderx-core
-          ./ccfx/ccfx d java "$GITHUB_WORKSPACE" -o result.ccfxd
-          ./ccfx/ccfx p result.ccfxd > result.txt
-          ./ccfx/ccfx m result.ccfxd -c > clone_metrics.txt
-          ./ccfx/ccfx m result.ccfxd -f > file_metrics.txt
-          # Optional: XML + derived lists
-          ./ccfx/scripts/post-prettyprint.pl result.txt result.xml
-          ./ccfx/scripts/similarfiles.py result.xml | sort -nr > dup_files.txt
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ccfx-results
-          path: |
-            ccfinderx-core/result.ccfxd
-            ccfinderx-core/result.txt
-            ccfinderx-core/clone_metrics.txt
-            ccfinderx-core/file_metrics.txt
-            ccfinderx-core/result.xml
-            ccfinderx-core/dup_files.txt
+          ccfinderx -i ../DuckSimulator -o result.txt
+          cat result.txt
