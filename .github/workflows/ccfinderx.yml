@@ -3,22 +3,32 @@ name: CCFinderX
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:   # allows manual run from Actions tab
+  workflow_dispatch:   # manual run
 
 jobs:
   run-ccfinderx:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Run CCFinderX using GitHub Action
-        uses: gpoo/ccfinderx-action@v1
-        with:
-          path: ./   # scan the whole DuckSimulator project
-          output: result.txt
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mono-complete unzip wget
+
+      - name: Download CCFinderX prebuilt binary
+        run: |
+          wget https://github.com/gpoo/ccfinderx/releases/download/v1.0/ccfx.zip
+          unzip ccfx.zip -d ccfx
+          chmod +x ccfx/ccfx
+
+      - name: Run CCFinderX (Java)
+        run: |
+          ./ccfx/ccfx d java ./ -o result.ccfxd
+          ./ccfx/ccfx p result.ccfxd -o result.txt
+          cat result.txt
 
       - name: Upload results
         uses: actions/upload-artifact@v4
