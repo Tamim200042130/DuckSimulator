@@ -5,7 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:   # allows manual run from Actions tab
+  workflow_dispatch:   
 
 jobs:
   run-ccfinderx:
@@ -17,7 +17,7 @@ jobs:
       - name: Run CCFinderX using GitHub Action
         uses: gpoo/ccfinderx-action@v1
         with:
-          path: ./   # scan the whole DuckSimulator project
+          path: ./   
           output: result.txt
 
       - name: Upload results
